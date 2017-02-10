@@ -7,6 +7,7 @@ You must test your agent's strength against a set of agents with known
 relative strength using tournament.py and include the results in your report.
 """
 import random
+import sys
 
 
 class Timeout(Exception):
@@ -172,8 +173,100 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        # Initialize
+        best_score = float("-inf")
+        best_move = (-1, -1)
+
+        # If the game board is empty, then return initail value.
+        if self.is_terminal_state(game, depth):
+            return (best_score, best_move)
+
+        # Check all sub-state and choose the max score as best move.
+        for next_move in game.get_legal_moves():
+            new_game = game.forecast_move(next_move)
+            new_score = self.minimax_get_min_score(new_game, depth-1)
+            if new_score > best_score:
+                best_score = new_score
+                best_move = next_move
+
+        return (best_score, best_move)
+
+    def minimax_get_max_score(self, game, depth):
+        """Get maximum score in current state.
+
+        Parameters
+        ----------
+        game : isolation.Board
+            An instance of the Isolation game `Board` class representing the
+            current game state
+
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
+
+        Returns
+        -------
+        float
+            Maximum score.
+
+        """
+        if self.is_terminal_state(game, depth):
+            return self.score(game, self)
+
+        max_score = float("-inf")
+
+        for next_move in game.get_legal_moves():
+            new_game = game.forecast_move(next_move)
+            new_score = self.minimax_get_min_score(new_game, depth-1)
+            if new_score > max_score:
+                max_score = new_score
+
+        return max_score
+
+    def minimax_get_min_score(self, game, depth):
+        """Get minimum score in current state.
+
+        Parameters
+        ----------
+        game : isolation.Board
+            An instance of the Isolation game `Board` class representing the
+            current game state
+
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
+
+        Returns
+        -------
+        float
+            Minimum score.
+
+        """
+        if self.is_terminal_state(game, depth):
+            return self.score(game, self)
+
+        min_score = float("inf")
+
+        for next_move in game.get_legal_moves():
+            new_game = game.forecast_move(next_move)
+            new_score = self.minimax_get_max_score(new_game, depth-1)
+            if new_score < min_score:
+                min_score = new_score
+
+        return min_score
+
+    def is_terminal_state(self, game, depth):
+        """Check whether current state is terminal state or not.
+
+        Returns
+        -------
+        bool
+            Return True if current state is a terminal state, otherwise return False.
+
+        """
+        if not game.get_legal_moves() or depth is 0:
+            return True
+        return False
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
         """Implement minimax search with alpha-beta pruning as described in the
