@@ -124,20 +124,36 @@ class CustomPlayer:
         # Perform any required initializations, including selecting an initial
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
+        best_move = (-1, -1)
+
+        if not legal_moves:
+            return best_move
 
         try:
             # The search method call (alpha beta or minimax) should happen in
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
-            pass
+
+            if self.iterative is True:
+                # TODO : must perform iterative deepening
+                pass
+            else:
+                if self.method is 'minimax':
+                    # Must use the search method minimax
+                    best_score, best_move = self.minimax(game, self.search_depth)
+                elif self.method is 'alphabeta':
+                    # Must use the search method alphabeta
+                    best_score, best_move = self.alphabeta(game, self.search_depth)
+                else:
+                    pass
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
             pass
 
         # Return the best move from the last completed search iteration
-        raise NotImplementedError
+        return best_move
 
     def minimax(self, game, depth, maximizing_player=True):
         """Implement the minimax search algorithm as described in the lectures.
@@ -192,7 +208,7 @@ class CustomPlayer:
         return (best_score, best_move)
 
     def minimax_get_max_score(self, game, depth):
-        """Get maximum score in current state.
+        """Get maximum score in current state using Minimax algorithm.
 
         Parameters
         ----------
@@ -224,7 +240,7 @@ class CustomPlayer:
         return max_score
 
     def minimax_get_min_score(self, game, depth):
-        """Get minimum score in current state.
+        """Get minimum score in current state using Minimax algorithm.
 
         Parameters
         ----------
@@ -309,5 +325,101 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        # Initialize
+        best_score = float("-inf")
+        best_move = (-1, -1)
+
+        # If the game board is empty, then return initail value.
+        if self.is_terminal_state(game, depth):
+            return (best_score, best_move)
+
+        # # Check all sub-state and choose the max score as best move.
+        # for next_move in game.get_legal_moves():
+        #     new_game = game.forecast_move(next_move)
+        #     new_score = self.alphabeta_get_min_score(new_game, depth-1, alpha, beta)
+        #     if new_score > best_score:
+        #         best_score = new_score
+        #         best_move = next_move
+
+        # Get best score of current state.
+        best_score, best_move = self.alphabeta_get_max_score(game, depth, alpha, beta)
+
+        return (best_score, best_move)
+
+    def alphabeta_get_max_score(self, game, depth, alpha, beta):
+        """Get maximum score in current state using Alpha-Beta Pruning algorithm.
+
+        Parameters
+        ----------
+        game : isolation.Board
+            An instance of the Isolation game `Board` class representing the
+            current game state
+
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
+
+        Returns
+        -------
+        float
+            Maximum score.
+
+        """
+        if self.is_terminal_state(game, depth):
+            return self.score(game, self), game.get_player_location(self)
+
+        max_score = float("-inf")
+        best_move = (-1, -1)
+
+        for next_move in game.get_legal_moves():
+            new_game = game.forecast_move(next_move)
+            new_score, move = self.alphabeta_get_min_score(new_game, depth-1, alpha, beta)
+            if new_score > max_score:
+                max_score = new_score
+                best_move = next_move
+            if max_score >= beta:
+                return max_score, best_move
+            else:
+                if alpha < max_score:
+                    alpha = max_score
+
+        return max_score, best_move
+
+    def alphabeta_get_min_score(self, game, depth, alpha, beta):
+        """Get minimum score in current state Alpha-Beta Pruning algorithm.
+
+        Parameters
+        ----------
+        game : isolation.Board
+            An instance of the Isolation game `Board` class representing the
+            current game state
+
+        depth : int
+            Depth is an integer representing the maximum number of plies to
+            search in the game tree before aborting
+
+        Returns
+        -------
+        float
+            Minimum score.
+
+        """
+        if self.is_terminal_state(game, depth):
+            return self.score(game, self), game.get_player_location(self)
+
+        min_score = float("inf")
+        best_move = (-1, -1)
+
+        for next_move in game.get_legal_moves():
+            new_game = game.forecast_move(next_move)
+            new_score, move = self.alphabeta_get_max_score(new_game, depth-1, alpha, beta)
+            if new_score < min_score:
+                min_score = new_score
+                best_move = next_move
+            if min_score <= alpha:
+                return min_score, best_move
+            else:
+                if beta > min_score:
+                    beta = min_score
+
+        return min_score, best_move
