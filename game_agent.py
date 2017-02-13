@@ -119,8 +119,6 @@ class CustomPlayer:
 
         self.time_left = time_left
 
-        # TODO: finish this function!
-
         # Perform any required initializations, including selecting an initial
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
@@ -136,8 +134,26 @@ class CustomPlayer:
             # when the timer gets close to expiring
 
             if self.iterative is True:
-                # TODO : must perform iterative deepening
-                pass
+                # Must perform iterative deepening
+                depth = 0
+                while True:
+                    # Get the best move with the increasing depth.
+                    if self.method is 'minimax':
+                        # Must use the search method minimax
+                        best_score, best_move = self.minimax(game, depth)
+                    elif self.method is 'alphabeta':
+                        # Must use the search method alphabeta
+                        best_score, best_move = self.alphabeta(game, depth)
+                    else:
+                        break
+
+                    # if result ≠ cutoff then return result
+                    # It terminates when (1) a solution is found or
+                    # (2) if the depth-limited search returns failure, meaning that no soution exists.
+                    if best_move is (-1, -1):
+                        break
+
+                    depth += 1
             else:
                 if self.method is 'minimax':
                     # Must use the search method minimax
