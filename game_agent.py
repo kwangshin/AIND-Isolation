@@ -141,6 +141,11 @@ class CustomPlayer:
                 # Must perform iterative deepening
                 depth = 0
                 while True:
+                    # If the time lefts less than 100 miliseconds,
+                    # then immediately return the best move so far.
+                    if time_left() < 100:
+                        break
+
                     # Get the best move with the increasing depth.
                     if self.method is 'minimax':
                         # Must use the search method minimax
@@ -151,9 +156,8 @@ class CustomPlayer:
                     else:
                         break
 
-                    # if result ≠ cutoff then return result
-                    # It terminates when (1) a solution is found or
-                    # (2) if the depth-limited search returns failure, meaning that no soution exists.
+                    # If there is no place to move,
+                    # then stop the loop and return (-1, -1).
                     if best_move is (-1, -1):
                         break
 
@@ -170,7 +174,7 @@ class CustomPlayer:
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
-            pass
+            return best_move
 
         # Return the best move from the last completed search iteration
         return best_move
