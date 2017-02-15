@@ -154,11 +154,6 @@ class CustomPlayer:
                 # Must perform iterative deepening
                 depth = 0
                 while True:
-                    # If the time lefts less than 100 miliseconds,
-                    # then immediately return the best move so far.
-                    if time_left() < 100:
-                        break
-
                     # Get the best move with the increasing depth.
                     if self.method is 'minimax':
                         # Must use the search method minimax
@@ -266,6 +261,11 @@ class CustomPlayer:
         if self.is_terminal_state(game, depth):
             return self.score(game, self)
 
+        # If the time lefts less than TIMER_THRESHOLD,
+        # then immediately return the best move so far.
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise Timeout()
+        
         max_score = float("-inf")
 
         for next_move in game.get_legal_moves():
@@ -297,6 +297,11 @@ class CustomPlayer:
         """
         if self.is_terminal_state(game, depth):
             return self.score(game, self)
+
+        # If the time lefts less than TIMER_THRESHOLD,
+        # then immediately return the best move so far.
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise Timeout()
 
         min_score = float("inf")
 
@@ -405,6 +410,11 @@ class CustomPlayer:
         if self.is_terminal_state(game, depth):
             return self.score(game, self), game.get_player_location(self)
 
+        # If the time lefts less than TIMER_THRESHOLD,
+        # then immediately return the best move so far.
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise Timeout()    
+
         max_score = float("-inf")
         best_move = (-1, -1)
 
@@ -443,6 +453,11 @@ class CustomPlayer:
         """
         if self.is_terminal_state(game, depth):
             return self.score(game, self), game.get_player_location(self)
+
+        # If the time lefts less than TIMER_THRESHOLD,
+        # then immediately return the best move so far.
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise Timeout()
 
         min_score = float("inf")
         best_move = (-1, -1)
