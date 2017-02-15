@@ -265,7 +265,7 @@ class CustomPlayer:
         # then immediately return the best move so far.
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
-        
+
         max_score = float("-inf")
 
         for next_move in game.get_legal_moves():
@@ -413,7 +413,7 @@ class CustomPlayer:
         # If the time lefts less than TIMER_THRESHOLD,
         # then immediately return the best move so far.
         if self.time_left() < self.TIMER_THRESHOLD:
-            raise Timeout()    
+            raise Timeout()
 
         max_score = float("-inf")
         best_move = (-1, -1)
