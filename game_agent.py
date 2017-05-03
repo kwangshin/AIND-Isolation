@@ -14,158 +14,221 @@ class Timeout(Exception):
     """Subclass base exception for code clarity."""
     pass
 
-
 def custom_score(game, player):
-    """Calculate the heuristic value of a game state from the point of view
-    of the given player.
-
-    Note: this function should be called from within a Player instance as
-    `self.score()` -- you should not need to call this function directly.
-
-    Parameters
-    ----------
-    game : `isolation.Board`
-        An instance of `isolation.Board` encoding the current state of the
-        game (e.g., player locations and blocked cells).
-
-    player : object
-        A player instance in the current game (i.e., an object corresponding to
-        one of the player objects `game.__player_1__` or `game.__player_2__`.)
-
-    Returns
-    -------
-    float
-        The heuristic value of the current game state to the specified player.
-    """
     if game.is_loser(player):
         return float("-inf")
 
     if game.is_winner(player):
         return float("inf")
 
-    selected_heuristic_number = 4
-
-    if selected_heuristic_number == 1:
-        return custom_score_heuristic_only_defense(game, player)
-    elif selected_heuristic_number == 2:
-        return custom_score_heuristic_more_weighted_opp_moves(game, player)
-    elif selected_heuristic_number == 3:
-        return custom_score_heuristic_avoid_edge(game, player)
-    elif selected_heuristic_number == 4:
-        return custom_score_heuristic_flex_strategy(game, player)
-
     return custom_score_heuristic_flex_strategy(game, player)
 
 def custom_score_heuristic_flex_strategy(game, player):
-    """We can take a different strategy in first-half and second-half of game.
-    If the game is in the first-half, then try not to go edge of board.
-    However if the game is going to be a second-half,
-    then take the weighted moves of opponent player strategy.
-
-    Parameters
-    ----------
-    game : `isolation.Board`
-        An instance of `isolation.Board` encoding the current state of the
-        game (e.g., player locations and blocked cells).
-
-    player : hashable
-        One of the objects registered by the game object as a valid player.
-        (i.e., `player` should be either game.__player_1__ or
-        game.__player_2__).
-
-    Returns
-    ----------
-    float
-        The heuristic value of the current game state
-    """
     total_space = game.width * game.height
+    third_of_total = total_space / 3
+    number_of_blank_space = len(game.get_blank_spaces())
 
-    if (total_space/2) < len(game.get_blank_spaces()):
+    # if number_of_blank_space > (third_of_total * 2):
+    #     # print("1/3:Start")
+    #     return custom_score_heuristic_avoid_edge(game, player)
+    # elif number_of_blank_space > third_of_total:
+    #     # print("2/3:Mid")
+    #     return custom_score_heuristic_more_weighted_opp_moves(game, player, 2)
+    # else:
+    #     # print("3/3:End")
+    #     return custom_score_heuristic_more_weighted_opp_moves(game, player, 1)
+
+    half_of_total = total_space / 2
+    if number_of_blank_space > half_of_total:
         return custom_score_heuristic_avoid_edge(game, player)
     else:
-        return custom_score_heuristic_more_weighted_opp_moves(game, player)
+        return custom_score_heuristic_more_weighted_opp_moves(game, player, 2)
 
 def custom_score_heuristic_avoid_edge(game, player):
-    """There will be less moves in edge of board.
-    So if the current location is the edge of board,
-    then decerese the score.
-
-    Parameters
-    ----------
-    game : `isolation.Board`
-        An instance of `isolation.Board` encoding the current state of the
-        game (e.g., player locations and blocked cells).
-
-    player : hashable
-        One of the objects registered by the game object as a valid player.
-        (i.e., `player` should be either game.__player_1__ or
-        game.__player_2__).
-
-    Returns
-    ----------
-    float
-        The heuristic value of the current game state
-    """
     edge_weighted = 0
 
     row, column = game.get_player_location(player)
     if row == 0 or column == 0 or row == (game.height-1) or column == (game.width-1):
-        edge_weighted = 4
+        edge_weighted = -4
     elif row == 1 or column == 1 or row == (game.height-2) or column == (game.width-2):
-        edge_weighted = 2
+        edge_weighted = -2
+    elif row == 2 or column == 2 or row == (game.height-3) or column == (game.width-3):
+        edge_weighted = -1
 
-    return float(custom_score_heuristic_more_weighted_opp_moves(game, player) - edge_weighted)
+    row, column = game.get_player_location(game.get_opponent(player))
+    if row == 0 or column == 0 or row == (game.height-1) or column == (game.width-1):
+        edge_weighted += 4
+    elif row == 1 or column == 1 or row == (game.height-2) or column == (game.width-2):
+        edge_weighted += 2
+    elif row == 2 or column == 2 or row == (game.height-3) or column == (game.width-3):
+        edge_weighted += 1
 
-def custom_score_heuristic_more_weighted_opp_moves(game, player):
-    """Let's put higher priority in oppenent moves.
-    So we will subtract the 2 times score of oppoenent's moves from customer score.
+    # return edge_weighted
+    return float(custom_score_heuristic_more_weighted_opp_moves(game, player, 2) + edge_weighted)
 
-    Parameters
-    ----------
-    game : `isolation.Board`
-        An instance of `isolation.Board` encoding the current state of the
-        game (e.g., player locations and blocked cells).
-
-    player : hashable
-        One of the objects registered by the game object as a valid player.
-        (i.e., `player` should be either game.__player_1__ or
-        game.__player_2__).
-
-    Returns
-    ----------
-    float
-        The heuristic value of the current game state
-    """
+def custom_score_heuristic_more_weighted_opp_moves(game, player, opp_weighted):
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
 
-    return float(own_moves - (2*opp_moves))
+    if own_moves is 0:
+        return float("-inf")
 
-def custom_score_heuristic_only_defense(game, player):
-    """The best defense is a good offense!
-    https://en.wikipedia.org/wiki/The_best_defense_is_a_good_offense
-    So, choose the move having opppnent's minimum legal moves.
+    if opp_moves is 0:
+        return float("inf")
 
-    Parameters
-    ----------
-    game : `isolation.Board`
-        An instance of `isolation.Board` encoding the current state of the
-        game (e.g., player locations and blocked cells).
+    return float(own_moves - (opp_weighted * opp_moves))
 
-    player : hashable
-        One of the objects registered by the game object as a valid player.
-        (i.e., `player` should be either game.__player_1__ or
-        game.__player_2__).
+# def custom_score(game, player):
+#     """Calculate the heuristic value of a game state from the point of view
+#     of the given player.
 
-    Returns
-    ----------
-    float
-        The heuristic value of the current game state
-    """
-    max_legal_moves = 8
-    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+#     Note: this function should be called from within a Player instance as
+#     `self.score()` -- you should not need to call this function directly.
 
-    return float(max_legal_moves - opp_moves)
+#     Parameters
+#     ----------
+#     game : `isolation.Board`
+#         An instance of `isolation.Board` encoding the current state of the
+#         game (e.g., player locations and blocked cells).
+
+#     player : object
+#         A player instance in the current game (i.e., an object corresponding to
+#         one of the player objects `game.__player_1__` or `game.__player_2__`.)
+
+#     Returns
+#     -------
+#     float
+#         The heuristic value of the current game state to the specified player.
+#     """
+#     if game.is_loser(player):
+#         return float("-inf")
+
+#     if game.is_winner(player):
+#         return float("inf")
+
+#     selected_heuristic_number = 4
+
+#     if selected_heuristic_number == 1:
+#         return custom_score_heuristic_only_defense(game, player)
+#     elif selected_heuristic_number == 2:
+#         return custom_score_heuristic_more_weighted_opp_moves(game, player)
+#     elif selected_heuristic_number == 3:
+#         return custom_score_heuristic_avoid_edge(game, player)
+#     elif selected_heuristic_number == 4:
+#         return custom_score_heuristic_flex_strategy(game, player)
+
+#     return custom_score_heuristic_flex_strategy(game, player)
+
+# def custom_score_heuristic_flex_strategy(game, player):
+#     """We can take a different strategy in first-half and second-half of game.
+#     If the game is in the first-half, then try not to go edge of board.
+#     However if the game is going to be a second-half,
+#     then take the weighted moves of opponent player strategy.
+
+#     Parameters
+#     ----------
+#     game : `isolation.Board`
+#         An instance of `isolation.Board` encoding the current state of the
+#         game (e.g., player locations and blocked cells).
+
+#     player : hashable
+#         One of the objects registered by the game object as a valid player.
+#         (i.e., `player` should be either game.__player_1__ or
+#         game.__player_2__).
+
+#     Returns
+#     ----------
+#     float
+#         The heuristic value of the current game state
+#     """
+#     total_space = game.width * game.height
+
+#     if (total_space/2) < len(game.get_blank_spaces()):
+#         return custom_score_heuristic_avoid_edge(game, player)
+#     else:
+#         return custom_score_heuristic_more_weighted_opp_moves(game, player)
+
+# def custom_score_heuristic_avoid_edge(game, player):
+#     """There will be less moves in edge of board.
+#     So if the current location is the edge of board,
+#     then decerese the score.
+
+#     Parameters
+#     ----------
+#     game : `isolation.Board`
+#         An instance of `isolation.Board` encoding the current state of the
+#         game (e.g., player locations and blocked cells).
+
+#     player : hashable
+#         One of the objects registered by the game object as a valid player.
+#         (i.e., `player` should be either game.__player_1__ or
+#         game.__player_2__).
+
+#     Returns
+#     ----------
+#     float
+#         The heuristic value of the current game state
+#     """
+#     edge_weighted = 0
+
+#     row, column = game.get_player_location(player)
+#     if row == 0 or column == 0 or row == (game.height-1) or column == (game.width-1):
+#         edge_weighted = 4
+#     elif row == 1 or column == 1 or row == (game.height-2) or column == (game.width-2):
+#         edge_weighted = 2
+
+#     return float(custom_score_heuristic_more_weighted_opp_moves(game, player) - edge_weighted)
+
+# def custom_score_heuristic_more_weighted_opp_moves(game, player):
+#     """Let's put higher priority in oppenent moves.
+#     So we will subtract the 2 times score of oppoenent's moves from customer score.
+
+#     Parameters
+#     ----------
+#     game : `isolation.Board`
+#         An instance of `isolation.Board` encoding the current state of the
+#         game (e.g., player locations and blocked cells).
+
+#     player : hashable
+#         One of the objects registered by the game object as a valid player.
+#         (i.e., `player` should be either game.__player_1__ or
+#         game.__player_2__).
+
+#     Returns
+#     ----------
+#     float
+#         The heuristic value of the current game state
+#     """
+#     own_moves = len(game.get_legal_moves(player))
+#     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+
+#     return float(own_moves - (2*opp_moves))
+
+# def custom_score_heuristic_only_defense(game, player):
+#     """The best defense is a good offense!
+#     https://en.wikipedia.org/wiki/The_best_defense_is_a_good_offense
+#     So, choose the move having opppnent's minimum legal moves.
+
+#     Parameters
+#     ----------
+#     game : `isolation.Board`
+#         An instance of `isolation.Board` encoding the current state of the
+#         game (e.g., player locations and blocked cells).
+
+#     player : hashable
+#         One of the objects registered by the game object as a valid player.
+#         (i.e., `player` should be either game.__player_1__ or
+#         game.__player_2__).
+
+#     Returns
+#     ----------
+#     float
+#         The heuristic value of the current game state
+#     """
+#     max_legal_moves = 8
+#     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+
+#     return float(max_legal_moves - opp_moves)
 
 class CustomPlayer:
     """Game-playing agent that chooses a move using your evaluation function
@@ -198,7 +261,7 @@ class CustomPlayer:
     """
 
     def __init__(self, search_depth=3, score_fn=custom_score,
-                 iterative=True, method='minimax', timeout=10.):
+                 iterative=True, method='minimax', timeout=20.):
         self.search_depth = search_depth
         self.iterative = iterative
         self.score = score_fn
